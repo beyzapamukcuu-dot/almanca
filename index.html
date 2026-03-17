@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>İnteraktif Buzdolabı - Tam Yerleşim</title>
+    <style>
+        /* Dünyaca ünlü, çok kaliteli ve modern bir yazı tipi olan Poppins'i içe aktarıyoruz */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&display=swap');
+
+        /* Ekran ayarları - Resmi ortalar ve ekranı kaplar */
+        body { 
+            margin: 0; 
+            padding: 0;
+            background-color: #222; 
+            text-align: center; 
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; 
+            touch-action: none; /* EKRANIN KAYDIRILMASINI TAMAMEN ENGELLER */
+        }
+
+        /* Sahne (Buzdolabının ve meyvelerin durduğu ana alan) */
+        #sahne { 
+            position: relative; 
+            display: inline-block; 
+            height: 100%; 
+        }
+
+        /* Buzdolabı arka plan resmi */
+        #buzdolabi { 
+            height: 100%; 
+            cursor: pointer; 
+            display: block; /* Resmin altındaki boşluğu sıfırlayarak kaymayı önler */
+        }
+
+        /* Yiyeceklerin genel ortak özellikleri */
+        .yiyecek { 
+            position: absolute; 
+            cursor: pointer; 
+            display: none; 
+            transition: transform 0.2s; 
+            object-fit: contain; 
+            z-index: 10; 
+        }
+
+        .yiyecek:hover { 
+            transform: scale(1.1); 
+        }
+
+        /* --- ALMANCA KELİME KUTUSU TASARIMI (Ultra Premium / Buzlu Cam Efekti) --- */
+        #kelime-kutusu {
+            position: absolute;
+            top: 8%; 
+            left: 50%;
+            transform: translateX(-50%);
+            
+            /* Buzlu Cam (Glassmorphism) Efekti */
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px); 
+            -webkit-backdrop-filter: blur(12px);
+            
+            /* İç boşluklar ve hap şekli */
+            padding: 12px 35px; 
+            border-radius: 40px; 
+            
+            /* Premium Yazı Tipi Ayarları */
+            color: #1a1a2e; 
+            font-family: 'Poppins', sans-serif; 
+            font-size: 28px; 
+            font-weight: 800;
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+            
+            /* Kaliteli Derinlik ve Gölgeler */
+            border: 2px solid rgba(255, 255, 255, 0.9); 
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 
+                        inset 0 0 0 2px rgba(255, 255, 255, 0.5); 
+            
+            display: none; 
+            z-index: 20; 
+            pointer-events: none; 
+            
+            /* Tatlı ve doğal yaylanma (bounce) animasyonu */
+            animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
+        }
+
+        /* Kutu Göründüğünde Çalışacak Tatlı Yaylanma Animasyonu */
+        @keyframes bounceIn {
+            0% { transform: translateX(-50%) scale(0.3); opacity: 0; }
+            50% { transform: translateX(-50%) scale(1.05); opacity: 1; }
+            70% { transform: translateX(-50%) scale(0.95); }
+            100% { transform: translateX(-50%) scale(1); }
+        }
+
+        /* --- YİYECEK KONUMLARI (Görsele Göre Tam Hizalanmış) --- */
+        
+        /* 1. ANA RAF (En Üst Raf) */
+        #kiraz    { top: 36%; left: 15%; width: 22%; }
+        #muz      { top: 36%; left: 26%; width: 22%; }
+        #elma     { top: 36.5%; left: 38%; width: 22%; }
+
+        /* 2. ANA RAF (Orta Raf) */
+        #peynir   { top: 47%; left: 16%; width: 21%; }
+        #portakal { top: 46%; left: 27%; width: 22%; }
+        #domates  { top: 46%; left: 40%; width: 22%; }
+
+        /* 3. ANA RAF (Alt Raf) */
+        #biber    { top: 55%; left: 15%; width: 22%; }
+        #salatalik{ top: 55%; left: 28%; width: 22%; }
+        #patlican { top: 55%; left: 41%; width: 22%; }
+
+        /* 4. ANA RAF (Sebzelik Bölümü - En Alt) */
+        #havuc    { top: 64%; left: 16%; width: 22%; }
+        #sogan    { top: 63%; left: 28%; width: 22%; }
+        #patates  { top: 64%; left: 42%; width: 18%; }
+
+        /* --- KAPI RAFLARI --- */
+        /* Kapı 1. Raf (En Üst) */
+        #yumurta  { top: 45%; left: 60%; width: 24%; }
+
+        /* Kapı 2. Raf (Orta) */
+        #armut    { top: 73%; left: 17%; width: 22%; }
+        #limon    { top: 71%; left: 40%; width: 24%; }
+
+        /* Kapı 3. Raf (Alt) */
+        #fasulye  { top: 73%; left: 30%; width: 20%; }
+
+    </style>
+</head>
+<body>
+
+    <div id="sahne">
+        <div id="kelime-kutusu"></div>
+
+        <img id="buzdolabi" src="buzdolabi.jpg" alt="Buzdolabı" onclick="dolabiAcKapat()">
+        
+        <img id="kiraz" class="yiyecek" src="kiraz.png" alt="Kiraz" onclick="sesCal(event, 'kiraz.mp3')">
+        <img id="muz" class="yiyecek" src="muz.png" alt="Muz" onclick="sesCal(event, 'muz.mp3')">
+        <img id="elma" class="yiyecek" src="elma.png" alt="Elma" onclick="sesCal(event, 'elma.mp3')">
+        
+        <img id="peynir" class="yiyecek" src="peynir.png" alt="Peynir" onclick="sesCal(event, 'peynir.mp3')">
+        <img id="portakal" class="yiyecek" src="portakal.png" alt="Portakal" onclick="sesCal(event, 'portakal.mp3')">
+        <img id="domates" class="yiyecek" src="domates.png" alt="Domates" onclick="sesCal(event, 'domates.mp3')">
+        
+        <img id="biber" class="yiyecek" src="biber.png" alt="Biber" onclick="sesCal(event, 'biber.mp3')">
+        <img id="salatalik" class="yiyecek" src="salatalik.png" alt="Salatalık" onclick="sesCal(event, 'salatalik.mp3')">
+        <img id="patlican" class="yiyecek" src="patlican.png" alt="Patlıcan" onclick="sesCal(event, 'patlican.mp3')">
+        
+        <img id="havuc" class="yiyecek" src="havuc.png" alt="Havuç" onclick="sesCal(event, 'havuc.mp3')">
+        <img id="sogan" class="yiyecek" src="sogan.png" alt="Soğan" onclick="sesCal(event, 'sogan.mp3')">
+        <img id="patates" class="yiyecek" src="patates.png" alt="Patates" onclick="sesCal(event, 'patates.mp3')">
+        
+        <img id="yumurta" class="yiyecek" src="yumurta.png" alt="Yumurta" onclick="sesCal(event, 'yumurta.mp3')">
+        <img id="armut" class="yiyecek" src="armut.png" alt="Armut" onclick="sesCal(event, 'armut.mp3')">
+        <img id="limon" class="yiyecek" src="limon.png" alt="Limon" onclick="sesCal(event, 'limon.mp3')">
+        <img id="fasulye" class="yiyecek" src="fasulye.png" alt="Fasulye" onclick="sesCal(event, 'fasulye.mp3')">
+    </div>
+
+    <script>
+        let kapakAcikMi = false;
+        let kelimeZamanlayici; 
+        
+        const buzdolabiResim = document.getElementById("buzdolabi");
+        const yiyecekler = document.querySelectorAll(".yiyecek");
+        const kelimeKutusu = document.getElementById("kelime-kutusu");
+
+        // Almanca Kelime Sözlüğü
+        const almancaKelimeler = {
+            "kiraz": "Kirsche",
+            "muz": "Banane",
+            "elma": "Apfel",
+            "peynir": "Käse",
+            "portakal": "Orange",
+            "domates": "Tomate",
+            "biber": "Paprika",
+            "salatalik": "Gurke",
+            "patlican": "Aubergine",
+            "havuc": "Karotte",
+            "sogan": "Zwiebel",
+            "patates": "Kartoffel",
+            "yumurta": "Ei",
+            "armut": "Birne",
+            "limon": "Zitrone",
+            "fasulye": "Bohne"
+        };
+
+        function dolabiAcKapat() {
+            if (kapakAcikMi === false) {
+                buzdolabiResim.src = "buzdolabi_acik.jpg"; 
+                yiyecekler.forEach(y => y.style.display = "block"); 
+                kapakAcikMi = true; 
+            } else {
+                buzdolabiResim.src = "buzdolabi.jpg"; 
+                yiyecekler.forEach(y => y.style.display = "none"); 
+                kelimeKutusu.style.display = "none"; 
+                clearTimeout(kelimeZamanlayici); 
+                kapakAcikMi = false; 
+            }
+        }
+
+        function sesCal(olay, sesDosyasiAdi) {
+            olay.stopPropagation(); 
+            
+            // 1. Sesi Çal
+            let ses = new Audio(sesDosyasiAdi);
+            ses.play();
+
+            // 2. Tıklanan yiyeceğin ID'sini al ve sözlükten Almancasını bul
+            const tiklananId = olay.target.id;
+            const kelime = almancaKelimeler[tiklananId];
+
+            // 3. Kelimeyi kutuya yaz ve kutuyu görünür yap
+            if (kelime) {
+                kelimeKutusu.innerText = kelime;
+                
+                // Arka arkaya tıklanırsa eski zamanlayıcıyı temizle
+                clearTimeout(kelimeZamanlayici);
+                
+                kelimeKutusu.style.display = "none";
+                setTimeout(() => {
+                    kelimeKutusu.style.display = "block";
+                    
+                    // KUTUYU 1.5 SANİYE SONRA OTOMATİK GİZLEME MANTIĞI
+                    kelimeZamanlayici = setTimeout(() => {
+                        kelimeKutusu.style.display = "none";
+                    }, 1500); 
+                    
+                }, 10);
+            }
+        }
+    </script>
+
+</body>
+</html>
