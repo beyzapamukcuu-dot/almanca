@@ -159,8 +159,15 @@
     </div>
 
     <script>
+        // Açık buzdolabı resmini arka planda önceden yükle (İlk açılıştaki kasılmayı önler)
+        const acikDolapResmi = new Image();
+        acikDolapResmi.src = "buzdolabi_acik.jpg";
+
         let kapakAcikMi = false;
         let kelimeZamanlayici; 
+        
+        // Sesleri hafızada tutmak için obje (Bellek sızıntısını önler)
+        const sesOnbellek = {};
         
         const buzdolabiResim = document.getElementById("buzdolabi");
         const yiyecekler = document.querySelectorAll(".yiyecek");
@@ -203,9 +210,12 @@
         function sesCal(olay, sesDosyasiAdi) {
             olay.stopPropagation(); 
             
-            // 1. Sesi Çal
-            let ses = new Audio(sesDosyasiAdi);
-            ses.play();
+            // 1. Sesi Çal (Hafızada yoksa oluştur, varsa tekrar kullan)
+            if (!sesOnbellek[sesDosyasiAdi]) {
+                sesOnbellek[sesDosyasiAdi] = new Audio(sesDosyasiAdi);
+            }
+            sesOnbellek[sesDosyasiAdi].currentTime = 0; // Sesi başa sar (Art arda tıklamalar için)
+            sesOnbellek[sesDosyasiAdi].play().catch(e => console.log("Ses çalma engellendi:", e));
 
             // 2. Tıklanan yiyeceğin ID'sini al ve sözlükten Almancasını bul
             const tiklananId = olay.target.id;
